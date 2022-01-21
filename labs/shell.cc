@@ -5,6 +5,9 @@
 // initialize shellstate
 //
 void shell_init(shellstate_t& state){
+  state.key_press = 0;
+  state.menu = 0;
+  state.compute = false;
 }
 
 //
@@ -40,9 +43,35 @@ void shell_init(shellstate_t& state){
 //
 void shell_update(uint8_t scankey, shellstate_t& stateinout){
 
-    hoh_debug("Got: "<<unsigned(scankey));
+    // hoh_debug("Got: "<<unsigned(scankey));
+    if(scankey) stateinout.key_press+=1;
+    if(scankey == 72 || scankey == 80) stateinout.menu=1-stateinout.menu;
+    if(scankey == 28){
+      if(stateinout.page == 0) stateinout.compute = true;
+      stateinout.page = 1-stateinout.page;
+    }
+
 }
 
+int foo(int arg){
+  for(int i=0;i<1000000000;++i){
+    if(i&2) arg+=1;
+    else arg-=1;
+  }
+  return arg;
+}
+
+
+int factors(int arg){
+  int ct=0;
+  for(int i=1;i<=arg;i++){
+    if(arg%i==0){
+      ct+=1;
+    }
+  }
+  return ct;
+
+}
 
 //
 // do computation
@@ -56,6 +85,20 @@ void shell_step(shellstate_t& stateinout){
 //stateinout.args[0] = 5;
 //stateinout.args[1] = 5;
   //
+  if(stateinout.compute == true){
+    switch (stateinout.menu)
+    {
+    case 0:
+      stateinout.result = foo(10);
+      break;
+    case 1:
+      stateinout.result = foo(1);
+      break;
+    default:
+      break;
+    }
+  }
+  stateinout.compute=false;
 }
 
 
@@ -63,7 +106,10 @@ void shell_step(shellstate_t& stateinout){
 // shellstate --> renderstate
 //
 void shell_render(const shellstate_t& shell, renderstate_t& render){
-
+  render.key_press = shell.key_press;
+  render.menu = shell.menu;
+  render.result = shell.result;
+  render.page = shell.page;
   //
   // renderstate. number of keys pressed = shellstate. number of keys pressed
   //
@@ -80,6 +126,7 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
 // compare a and b
 //
 bool render_eq(const renderstate_t& a, const renderstate_t& b){
+  return (a.key_press == b.key_press && a.menu == b.menu && a.result == b.result && a.page == b.page);
 }
 
 
@@ -93,7 +140,28 @@ static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, 
 //
 void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
 
-
+  // drawnumberinhex()
+  // drawrect(1,1,w-1,h-1,7,0,w,h,vgatext_base);
+  if(state.page == 0){
+    fillrect(0,0,w,h,3,2,w,h,vgatext_base);
+    if(state.menu == 0){
+      fillrect(0,1,w,2,4,2,w,h,vgatext_base);    
+      drawtext(1,1,"10",2,4,0,w,h,vgatext_base);
+      drawtext(1,2,"1",2,3,0,w,h,vgatext_base); 
+    }
+    else{
+      fillrect(0,2,w,3,4,2,w,h,vgatext_base);
+      drawtext(1,1,"10",2,3,0,w,h,vgatext_base);
+      drawtext(1,2,"1",2,4,0,w,h,vgatext_base);   
+    } 
+  }
+  else{
+    fillrect(0,0,w,h,10,2,w,h,vgatext_base);
+    drawnumberinhex(1,1,state.result,10,10,0,w,h,vgatext_base);
+  }
+  fillrect(0,h-1,w,h,12,2,w,h,vgatext_base);  
+  drawtext(1,h-1,"Key",9,12,7,w,h,vgatext_base);
+  drawnumberinhex(9,h-1,state.key_press,10,12,7,w,h,vgatext_base);
   // this is just an example:
   //
   // Please create your own user interface

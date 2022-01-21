@@ -3,9 +3,21 @@
 #include "util/debug.h"
 
 struct shellstate_t{
+    int key_press = 0;  // Number of keys pressed
+    int state = 0; // 0 select menu, 1 take input, 2 computing, 3 displaying output
+    char inp[100];
+    int inp_size;
+    int menu = 0; // Menu items (functions)
+    // bool compute = false;
+    int result = 0;
+    // int page = 0;
 };
 
 struct renderstate_t{
+    int key_press = 0; //Number of key presses
+    int menu = 0; //Menu items(functions)
+    int result = 0; 
+    // int page = 0;
 };
 
 void shell_init(shellstate_t& state);
