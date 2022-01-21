@@ -8,16 +8,19 @@ struct shellstate_t{
     char inp[100];
     int inp_size;
     int menu = 0; // Menu items (functions)
-    // bool compute = false;
     int result = 0;
-    // int page = 0;
+    int num_menu=0;
+    
 };
 
 struct renderstate_t{
     int key_press = 0; //Number of key presses
-    int menu = 0; //Menu items(functions)
+    int state = 0; // 0 select menu, 1 take input, 3 displaying output
+    char inp[100];
+    int inp_size;
+    int menu = 0; // Highlighted menu
     int result = 0; 
-    // int page = 0;
+  
 };
 
 void shell_init(shellstate_t& state);

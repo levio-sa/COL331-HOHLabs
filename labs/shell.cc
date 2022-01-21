@@ -7,7 +7,11 @@
 void shell_init(shellstate_t& state){
   state.key_press = 0;
   state.menu = 0;
-  state.compute = false;
+  state.state = 0; // 0 select menu, 1 take input, 2 computing, 3 displaying output
+  // state.inp[100];
+  state.inp_size=0;
+  state.result = 0;
+  state.num_menu = 4;
 }
 
 //
@@ -41,16 +45,171 @@ void shell_init(shellstate_t& state){
 // - only handle the keys which you're interested in
 // - for example, you may want to handle up(0x48),down(0x50) arrow keys for menu.
 //
+
+char get_char_from_scan(uint8_t scankey){
+    if(2<=scankey && scankey<=11){ //0 to 9
+      return (scankey-1)%10+'0';
+    }
+    else{
+      switch (scankey)
+      {
+        case 0x1e:
+          return 'a';
+          break; 
+
+        case 0x30:
+          return 'b';
+          break;
+
+        case 0x2e:
+          return 'c';
+          break;
+
+        case 0x20:
+          return 'd';
+          break;
+
+        case 0x12:
+          return 'e';
+          break;
+          
+        case 0x21:
+          return 'f';
+          break;
+          
+        case 0x22:
+          return 'g';
+          break;
+
+        case 0x23:
+          return 'h';
+          break;
+
+        case 0x17:
+          return 'i';
+          break;
+
+        case 0x24:
+          return 'j';
+          break;
+
+        case 0x25:
+          return 'k';
+          break;
+
+        case 0x26:
+          return 'l';
+          break;
+
+        case 0x32:
+          return 'm';
+          break;
+
+
+        case 0x31:
+          return 'n';
+          break;
+
+
+        case 0x18:
+          return 'o';
+          break;
+
+
+        case 0x19:
+          return 'p';
+          break;
+
+        case 0x10:
+          return 'q';
+          break;
+
+        case 0x13:
+          return 'r';
+          break;
+
+
+        case 0x1f:
+          return 's';
+          break;
+
+
+        case 0x14:
+          return 't';
+          break;
+
+        case 0x16:
+          return 'u';
+          break;
+
+
+        case 0x2f:
+          return 'v';
+          break;
+
+
+        case 0x11:
+          return 'w';
+          break;
+
+        case 0x2d:
+          return 'x';
+          break;
+
+
+        case 0x15:
+          return 'y';
+          break;
+
+        case 0x2c:
+          return 'z';
+            break;
+
+        default:
+          return '$';  //default value
+          break;
+      }
+    }
+}
+
 void shell_update(uint8_t scankey, shellstate_t& stateinout){
 
-    // hoh_debug("Got: "<<unsigned(scankey));
+    hoh_debug("Got: "<<unsigned(scankey));
     if(scankey) stateinout.key_press+=1;
-    if(scankey == 72 || scankey == 80) stateinout.menu=1-stateinout.menu;
-    if(scankey == 28){
-      if(stateinout.page == 0) stateinout.compute = true;
-      stateinout.page = 1-stateinout.page;
-    }
+    if(stateinout.state == 0){
 
+      switch(scankey)
+      {
+        case 72:
+          stateinout.menu = (stateinout.num_menu-1+stateinout.menu)%stateinout.num_menu;;
+          break;
+
+        case 80:
+          stateinout.menu = (1+stateinout.menu)%stateinout.num_menu;
+          break; 
+
+        case 28:
+          stateinout.state = 1;
+          stateinout.inp_size = 0;
+          break;
+
+        default:
+          break;
+      }
+
+    }
+    else if(stateinout.state == 1){      
+      if(scankey == 28) stateinout.state = 2;
+      else if(scankey == 0x0e && stateinout.inp_size>0) stateinout.inp_size--;
+      else if(scankey == 1) stateinout.state = 0;
+      else {
+        char tmp = get_char_from_scan(scankey);
+        if(tmp!='$') stateinout.inp[stateinout.inp_size++] = tmp;
+      }      
+    }
+    else if(stateinout.state == 3){
+      if(scankey == 28) {stateinout.state = 0;stateinout.inp_size=0;}
+    }
 }
 
 int foo(int arg){
@@ -73,9 +232,49 @@ int factors(int arg){
 
 }
 
+
+int factorial(int arg){
+  if(arg<0){
+    return -1;
+  }
+  else if(arg==0 || arg==1){
+    return 1;
+  }
+  else{
+    int pro=1;
+    for(int j=1;j<=arg;j++){
+      pro*=j;
+    }
+    return pro;
+  }
+}
+
+
+int fib(int arg){
+  // if()
+  return arg;
+}
+
 //
 // do computation
 //
+
+
+int sanity_check(shellstate_t& stateinout){
+  
+  int result = 0;
+  for(int i=0; i<stateinout.inp_size; ++i){
+    result*=10;
+    char temp=stateinout.inp[i];
+    if(temp < '0' || temp > '9'){
+      return -1;
+    }
+    else result+=(temp-'0');
+  }
+  return result;
+}
+  
+
 void shell_step(shellstate_t& stateinout){
 
   //
@@ -84,21 +283,31 @@ void shell_step(shellstate_t& stateinout){
   //   call that function( with arguments stored in stateinout) ;
 //stateinout.args[0] = 5;
 //stateinout.args[1] = 5;
-  //
-  if(stateinout.compute == true){
-    switch (stateinout.menu)
-    {
-    case 0:
-      stateinout.result = foo(10);
-      break;
-    case 1:
-      stateinout.result = foo(1);
-      break;
-    default:
-      break;
+ 
+
+  if(stateinout.state == 2){  //echo fib factorial factors NOTA
+    switch(stateinout.menu){
+      case 0: // echo
+        break;
+      case 1:
+        stateinout.result = sanity_check(stateinout);
+        if(stateinout.result!=-1) stateinout.result = factors(stateinout.result);
+        break;
+      case 2:
+        stateinout.result = sanity_check(stateinout);
+        if(stateinout.result!=-1) stateinout.result = factorial(stateinout.result);
+        break;
+       
+      case 3:
+        stateinout.result = sanity_check(stateinout);
+        if(stateinout.result!=-1) stateinout.result = fib(stateinout.result);
+        break;
+        
+      default:
+        break;
     }
+    stateinout.state = 3;
   }
-  stateinout.compute=false;
 }
 
 
@@ -107,9 +316,13 @@ void shell_step(shellstate_t& stateinout){
 //
 void shell_render(const shellstate_t& shell, renderstate_t& render){
   render.key_press = shell.key_press;
-  render.menu = shell.menu;
-  render.result = shell.result;
-  render.page = shell.page;
+  render.state = shell.state; // 0 select menu, 1 take input, 3 displaying output
+  if(render.inp_size <= shell.inp_size){
+    for(int i=render.inp_size; i<shell.inp_size; ++i) render.inp[i] = shell.inp[i];
+  }
+  render.inp_size = shell.inp_size;
+  render.menu = shell.menu; // Highlighted menu
+  render.result = shell.result; 
   //
   // renderstate. number of keys pressed = shellstate. number of keys pressed
   //
@@ -126,7 +339,15 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
 // compare a and b
 //
 bool render_eq(const renderstate_t& a, const renderstate_t& b){
-  return (a.key_press == b.key_press && a.menu == b.menu && a.result == b.result && a.page == b.page);
+  if(a.key_press == b.key_press && a.state == b.state && a.menu == b.menu && a.result == b.result && a.inp_size==b.inp_size){
+    for(int i=0; i<a.inp_size; ++i){
+      if(a.inp[i] != b.inp[i]) return false;
+    }
+    return true;
+  }
+  else{
+    return false;
+  }
 }
 
 
@@ -134,6 +355,7 @@ static void fillrect(int x0, int y0, int x1, int y1, uint8_t bg, uint8_t fg, int
 static void drawrect(int x0, int y0, int x1, int y1, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
 static void drawtext(int x,int y, const char* str, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
 static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
+static void drawnumberindecimal(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
 
 //
 // Given a render state, we need to write it into vgatext buffer
@@ -141,27 +363,98 @@ static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, 
 void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
 
   // drawnumberinhex()
-  // drawrect(1,1,w-1,h-1,7,0,w,h,vgatext_base);
-  if(state.page == 0){
-    fillrect(0,0,w,h,3,2,w,h,vgatext_base);
-    if(state.menu == 0){
-      fillrect(0,1,w,2,4,2,w,h,vgatext_base);    
-      drawtext(1,1,"10",2,4,0,w,h,vgatext_base);
-      drawtext(1,2,"1",2,3,0,w,h,vgatext_base); 
-    }
-    else{
-      fillrect(0,2,w,3,4,2,w,h,vgatext_base);
-      drawtext(1,1,"10",2,3,0,w,h,vgatext_base);
-      drawtext(1,2,"1",2,4,0,w,h,vgatext_base);   
-    } 
-  }
-  else{
-    fillrect(0,0,w,h,10,2,w,h,vgatext_base);
-    drawnumberinhex(1,1,state.result,10,10,0,w,h,vgatext_base);
-  }
-  fillrect(0,h-1,w,h,12,2,w,h,vgatext_base);  
+  // fillrect(0,1,w,2,0,2,w,h,vgatext_base);   
+  // fillrect(0,2,w,3,1,2,w,h,vgatext_base);   
+  // fillrect(0,3,w,4,2,2,w,h,vgatext_base);   
+  // fillrect(0,4,w,5,3,2,w,h,vgatext_base);   
+  // fillrect(0,5,w,6,4,2,w,h,vgatext_base);   
+  // fillrect(0,6,w,7,5,2,w,h,vgatext_base);   
+  // fillrect(0,7,w,8,6,2,w,h,vgatext_base);   
+  // fillrect(0,8,w,9,7,2,w,h,vgatext_base);   
+  // fillrect(0,9,w,10,8,2,w,h,vgatext_base);   
+  // fillrect(0,10,w,11,9,2,w,h,vgatext_base);  
+  // fillrect(0,11,w,12,10,2,w,h,vgatext_base);   
+  // fillrect(0,12,w,13,11,2,w,h,vgatext_base);   
+  // fillrect(0,13,w,14,12,2,w,h,vgatext_base);   
+  // fillrect(0,14,w,15,13,2,w,h,vgatext_base);   
+  // fillrect(0,15,w,16,14,2,w,h,vgatext_base);  
+  // fillrect(0,16,w,17,15,2,w,h,vgatext_base);
+      
+  // drawtext(5,0,"Menu",9,12,7,w,h,vgatext_base);
+  fillrect(0,0,w,h,14,2,w,h,vgatext_base);
+  fillrect(0,h-1,w,h,12,2,w,h,vgatext_base);
+  drawtext(35,0,"Menu",9,14,0,w,h,vgatext_base);
   drawtext(1,h-1,"Key",9,12,7,w,h,vgatext_base);
   drawnumberinhex(9,h-1,state.key_press,10,12,7,w,h,vgatext_base);
+  // if(state.state == 0){
+    if(state.menu == 0){
+      fillrect(0,1,w,2,8,2,w,h,vgatext_base);    
+      drawtext(1,1,"echo",4,8,0,w,h,vgatext_base);
+      drawtext(1,2,"factors",7,14,0,w,h,vgatext_base);
+      drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+      drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);      
+    }
+    else if(state.menu == 1){
+      fillrect(0,2,w,3,8,2,w,h,vgatext_base);    
+      drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+      drawtext(1,2,"factors",7,8,0,w,h,vgatext_base);
+      drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+      drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);      
+    }
+    else if(state.menu == 2){
+      fillrect(0,3,w,4,8,2,w,h,vgatext_base);    
+      drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+      drawtext(1,2,"factors",7,14,0,w,h,vgatext_base);
+      drawtext(1,3,"factorial",9,8,0,w,h,vgatext_base);
+      drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);      
+    }
+    else if(state.menu == 3){
+      fillrect(0,4,w,5,8,2,w,h,vgatext_base);    
+      drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+      drawtext(1,2,"factors",7,14,0,w,h,vgatext_base);
+      drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+      drawtext(1,4,"fib",3,8,0,w,h,vgatext_base);      
+    }
+  // }
+  // if(state.state != 0){
+    int margin=0;
+    if(state.menu == 0){
+      drawtext(1,6,"$ echo",6,14,4,w,h,vgatext_base);
+      margin=6;
+    }
+    else if(state.menu == 1){
+      drawtext(1,6,"$ factors",9,14,4,w,h,vgatext_base);
+      margin=9;
+    }
+    else if(state.menu == 2){
+      drawtext(1,6,"$ factorial",11,14,4,w,h,vgatext_base);
+      margin=11;
+    }
+    else if(state.menu == 3){
+      drawtext(1,6,"$ fib",5,14,4,w,h,vgatext_base); 
+      margin=5;
+    }
+
+    drawtext(margin+2,6,state.inp,state.inp_size,14,4,w,h,vgatext_base); 
+  // }
+
+  if(state.state == 3){
+    if(state.menu == 0){
+      drawtext(2,7,state.inp,state.inp_size,14,4,w,h,vgatext_base);
+    }
+    else if(state.result == -1){
+      drawtext(2,7,"Invalid Argument",17,14,4,w,h,vgatext_base);
+    }
+    else{
+      drawnumberindecimal(2,7,state.result,100,14,4,w,h,vgatext_base); 
+    }
+  }
+
+
+
+
+
+
   // this is just an example:
   //
   // Please create your own user interface
@@ -230,6 +523,19 @@ static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, 
   for(int i=0;i<max-1;i++){
     a[max-1-i-1]=hex2char(number%16);
     number=number/16;
+  }
+  a[max-1]='\0';
+
+  drawtext(x,y,a,maxw,bg,fg,w,h,vgatext_base);
+}
+
+
+static void drawnumberindecimal(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base){
+  enum {max=sizeof(uint32_t)*2+1};
+  char a[max];
+  for(int i=0;i<max-1;i++){
+    a[max-1-i-1]=(number%10)+'0';
+    number=number/10;
   }
   a[max-1]='\0';
 
