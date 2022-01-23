@@ -10,7 +10,8 @@ struct shellstate_t{
     int menu = 0; // Menu items (functions)
     int result = 0;
     int num_menu=0;
-    
+    char display[100][100];
+    int cur_line = 0;
 };
 
 struct renderstate_t{
@@ -20,6 +21,8 @@ struct renderstate_t{
     int inp_size;
     int menu = 0; // Highlighted menu
     int result = 0; 
+    char* display[100];
+    int cur_line = 0;
   
 };
 

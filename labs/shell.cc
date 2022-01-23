@@ -12,6 +12,13 @@ void shell_init(shellstate_t& state){
   state.inp_size=0;
   state.result = 0;
   state.num_menu = 4;
+  state.cur_line = 0;
+  
+  for(int i = 0; i < 100; i++){
+    for(int j = 0; j < 100; j++){
+      state.display[i][j] = ' ';
+    }
+  }
 }
 
 //
@@ -273,7 +280,40 @@ int sanity_check(shellstate_t& stateinout){
   }
   return result;
 }
-  
+
+void store_input(shellstate_t& stateinout, char *str, int length, int xpos, int ypos){
+  for(int j = 0; j < length; j++){
+     stateinout.display[ypos][xpos + j] = str[j];
+  }
+}
+
+int itoa(int value, char *str){
+  if(value == 0){   
+    *str = '0';
+    return 1;
+  }
+  int length = 0;
+  int temp;
+  for(temp = value; temp > 0; temp/=10, str++);
+  *str = '\0';
+  for(temp = value; temp > 0;temp/=10){
+    *--str = temp % 10 + '0';
+    length++;
+  }
+  return length;
+}
+
+void shift(shellstate_t& stateinout){
+  for(int i = 1; i < stateinout.cur_line; i++){
+    for(int j = 0; j < 100; j++){
+      stateinout.display[i - 1][j] = stateinout.display[i][j];
+    }
+  }
+
+  for(int j = 0; j < 100; j++){
+    stateinout.display[stateinout.cur_line - 1][j] = ' ';
+  }
+}
 
 void shell_step(shellstate_t& stateinout){
 
@@ -284,21 +324,34 @@ void shell_step(shellstate_t& stateinout){
 //stateinout.args[0] = 5;
 //stateinout.args[1] = 5;
  
-
+  int margin = 0;
+  if(stateinout.cur_line >= 16){ // Maximum lines that will be printed
+    shift(stateinout);
+    stateinout.cur_line -= 1;
+  } 
+  
   if(stateinout.state == 2){  //echo fib factorial factors NOTA
     switch(stateinout.menu){
       case 0: // echo
+        store_input(stateinout, "$ echo", 6, 0, stateinout.cur_line);
+        margin = 6;
         break;
       case 1:
+        store_input(stateinout, "$ factors", 9, 0, stateinout.cur_line);
+        margin = 9;
         stateinout.result = sanity_check(stateinout);
         if(stateinout.result!=-1) stateinout.result = factors(stateinout.result);
         break;
       case 2:
+        store_input(stateinout, "$ factorial", 11, 0, stateinout.cur_line);
+        margin = 11;
         stateinout.result = sanity_check(stateinout);
         if(stateinout.result!=-1) stateinout.result = factorial(stateinout.result);
         break;
        
       case 3:
+        store_input(stateinout, "$ fib", 5, 0, stateinout.cur_line);
+        margin = 5;
         stateinout.result = sanity_check(stateinout);
         if(stateinout.result!=-1) stateinout.result = fib(stateinout.result);
         break;
@@ -306,8 +359,22 @@ void shell_step(shellstate_t& stateinout){
       default:
         break;
     }
+    store_input(stateinout, stateinout.inp, stateinout.inp_size, margin + 1, stateinout.cur_line);
+    if(stateinout.menu == 0){
+      store_input(stateinout, stateinout.inp, stateinout.inp_size, 2, stateinout.cur_line + 1);
+    }
+    else if(stateinout.result == -1){
+      store_input(stateinout, "Invalid Argument", 16, 2, stateinout.cur_line + 1);
+    }
+    else{
+      char str[100];
+      int l = itoa(stateinout.result, str);
+      store_input(stateinout, str, l, 2, stateinout.cur_line + 1);
+    }
     stateinout.state = 3;
+    stateinout.cur_line += 2;
   }
+  
 }
 
 
@@ -320,6 +387,10 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
   if(render.inp_size <= shell.inp_size){
     for(int i=render.inp_size; i<shell.inp_size; ++i) render.inp[i] = shell.inp[i];
   }
+  for(int i = 0; i < shell.cur_line; i++){
+    render.display[i] = const_cast<char*> (shell.display[i]);
+  }
+  render.cur_line = shell.cur_line;
   render.inp_size = shell.inp_size;
   render.menu = shell.menu; // Highlighted menu
   render.result = shell.result; 
@@ -339,9 +410,12 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
 // compare a and b
 //
 bool render_eq(const renderstate_t& a, const renderstate_t& b){
-  if(a.key_press == b.key_press && a.state == b.state && a.menu == b.menu && a.result == b.result && a.inp_size==b.inp_size){
+  if(a.key_press == b.key_press && a.state == b.state && a.menu == b.menu && a.result == b.result && a.inp_size==b.inp_size && a.cur_line == b.cur_line){
     for(int i=0; i<a.inp_size; ++i){
       if(a.inp[i] != b.inp[i]) return false;
+    }
+    for(int i=0; i<a.cur_line; ++i){
+      if(a.display[i] != b.display[i]) return false;
     }
     return true;
   }
@@ -385,7 +459,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
   fillrect(0,h-1,w,h,12,2,w,h,vgatext_base);
   drawtext(35,0,"Menu",9,14,0,w,h,vgatext_base);
   drawtext(1,h-1,"Key",9,12,7,w,h,vgatext_base);
-  drawnumberinhex(9,h-1,state.key_press,10,12,7,w,h,vgatext_base);
+  drawnumberindecimal(9,h-1,state.key_press,10,12,7,w,h,vgatext_base);
   // if(state.state == 0){
     if(state.menu == 0){
       fillrect(0,1,w,2,8,2,w,h,vgatext_base);    
@@ -416,29 +490,34 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       drawtext(1,4,"fib",3,8,0,w,h,vgatext_base);      
     }
   // }
-  // if(state.state != 0){
+  for(int i = 0; i < state.cur_line; i++){
+    drawtext(1, i + 6, state.display[i], 100, 14,4,w,h,vgatext_base);
+  }
+  if(state.state != 3){
     int margin=0;
     if(state.menu == 0){
-      drawtext(1,6,"$ echo",6,14,4,w,h,vgatext_base);
+      drawtext(1,state.cur_line + 6,"$ echo",6,14,4,w,h,vgatext_base);
       margin=6;
     }
     else if(state.menu == 1){
-      drawtext(1,6,"$ factors",9,14,4,w,h,vgatext_base);
+      drawtext(1,state.cur_line + 6,"$ factors",9,14,4,w,h,vgatext_base);
       margin=9;
     }
     else if(state.menu == 2){
-      drawtext(1,6,"$ factorial",11,14,4,w,h,vgatext_base);
+      drawtext(1,state.cur_line + 6,"$ factorial",11,14,4,w,h,vgatext_base);
       margin=11;
     }
     else if(state.menu == 3){
-      drawtext(1,6,"$ fib",5,14,4,w,h,vgatext_base); 
+      drawtext(1,state.cur_line + 6,"$ fib",5,14,4,w,h,vgatext_base); 
       margin=5;
     }
 
-    drawtext(margin+2,6,state.inp,state.inp_size,14,4,w,h,vgatext_base); 
-  // }
-
-  if(state.state == 3){
+    drawtext(margin+2,state.cur_line + 6,state.inp,state.inp_size,14,4,w,h,vgatext_base); 
+  }
+    
+  //hoh_debug(state.state);
+  
+  /*if(state.state == 3){
     if(state.menu == 0){
       drawtext(2,7,state.inp,state.inp_size,14,4,w,h,vgatext_base);
     }
@@ -448,7 +527,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     else{
       drawnumberindecimal(2,7,state.result,100,14,4,w,h,vgatext_base); 
     }
-  }
+  }*/
 
 
 
