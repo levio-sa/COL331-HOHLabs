@@ -411,7 +411,7 @@ int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
   else if(strcmp(fun,"fib")==0){
     stateinout.funk = 3;
     stateinout.result = sanity_check(stateinout);
-    if(stattrcmpeino, esult! == 0=
+    if(stateinout.result!=-1) stateinout.result = fib(stateinout.result);
     return 5;
   }
 }
@@ -617,7 +617,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     }
     else if(state.menu == 4){
       drawtext(1,state.cur_line + 7,"$",2,14,4,w,h,vgatext_base); 
-      margin=2;
+      margin=1;
     }
 
     drawtext(margin+2,state.cur_line + 7,state.inp,state.inp_size,14,4,w,h,vgatext_base); 
