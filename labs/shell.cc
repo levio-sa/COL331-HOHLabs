@@ -344,7 +344,7 @@ int strcmp(const char *X, const char *Y){
   return *(const unsigned char*)X - *(const unsigned char*)Y;
 }
 
-int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
+int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line and returns length of argument
   char fun[100];
   int i=0;
   for(i=0; i<stateinout.inp_size; ++i){
@@ -358,6 +358,7 @@ int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
   for(i;i<stateinout.inp_size;++i){
     if(stateinout.inp[i]!=' ') break;
   }
+  int fun_length=i;
   int k = 0;
   for(i;i<stateinout.inp_size;++i){
     stateinout.inp[k++] = stateinout.inp[i];
@@ -385,6 +386,18 @@ int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
     stateinout.result = sanity_check(stateinout);
     if(stateinout.result!=-1) stateinout.result = fib(stateinout.result);
     return 5;
+  }
+  else if(strcmp(fun,"factors")==0){
+    stateinout.funk = 4;
+    stateinout.result = sanity_check(stateinout);
+    if(stateinout.result!=-1) stateinout.result = factors(stateinout.result);
+    return 9;
+  }
+  else{
+    stateinout.funk = -1;
+    stateinout.result=-1;
+    return fun_length+1;
+
   }
 }
 
@@ -441,7 +454,11 @@ void shell_step(shellstate_t& stateinout){
         break;
     }
     store_input(stateinout, stateinout.inp, stateinout.inp_size, margin + 1, stateinout.cur_line);
-    if(stateinout.menu == 0 || (stateinout.menu == 4 && stateinout.funk == 0)){
+
+    if(stateinout.menu == 0 ){
+      store_input(stateinout, stateinout.inp, stateinout.inp_size, 2, stateinout.cur_line + 1);
+    }
+    else if(stateinout.menu == 4 && stateinout.funk == 0){
       store_input(stateinout, stateinout.inp, stateinout.inp_size, 2, stateinout.cur_line + 1);
     }
     else if(stateinout.result == -1){
@@ -475,7 +492,7 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
   render.inp_size = shell.inp_size;
   render.menu = shell.menu; // Highlighted menu
   render.result = shell.result; 
-  render.funk = shell.funk;
+  
   //
   // renderstate. number of keys pressed = shellstate. number of keys pressed
   //
@@ -492,7 +509,8 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
 // compare a and b
 //
 bool render_eq(const renderstate_t& a, const renderstate_t& b){
-  if(a.key_press == b.key_press && a.state == b.state && a.menu == b.menu && a.result == b.result && a.inp_size==b.inp_size && a.cur_line == b.cur_line){
+  if(a.key_press == b.key_press && a.state == b.state && a.menu == b.menu && a.result == b.result && 
+  a.inp_size==b.inp_size && a.cur_line == b.cur_line){
     for(int i=0; i<a.inp_size; ++i){
       if(a.inp[i] != b.inp[i]) return false;
     }
@@ -517,17 +535,17 @@ static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, 
 // Given a render state, we need to write it into vgatext buffer
 //
 void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
-      
+
+  char presses[10];      
   
-  fillrect(0,0,w,h,14,2,w,h,vgatext_base);
-  fillrect(0,h-1,w,h,12,2,w,h,vgatext_base);
-  drawtext(35,0,"Menu",9,14,0,w,h,vgatext_base);
-  drawtext(1,h-1,"Key Presses",16,12,4,w,h,vgatext_base);
-  char presses[10];
-  int l=itoa(state.key_press,presses);
-  drawtext(19,h-1,presses,3,12,7,w,h,vgatext_base);
- 
-  if(state.menu == 0){
+  fillrect(0,0,w,h,14,2,w,h,vgatext_base); //Filling the whole space
+  fillrect(0,h-1,w,h,12,2,w,h,vgatext_base); //Filling bottom for KeyPresses status bar
+  drawtext(35,0,"Menu",9,14,0,w,h,vgatext_base); //Text Menu at center in top
+  drawtext(1,h-1,"Key Presses",16,12,4,w,h,vgatext_base); //Key Presses text
+  
+  int l=itoa(state.key_press,presses);//convert number of presses to string
+  drawtext(19,h-1,presses,3,12,7,w,h,vgatext_base); //Count of keypresses
+  if(state.menu == 0){  //Coloring the corresponding menu click in grey
     fillrect(0,1,w,2,8,2,w,h,vgatext_base);    
     drawtext(1,1,"echo",4,8,0,w,h,vgatext_base);
     drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
@@ -568,12 +586,12 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,5,"cli",3,8,0,w,h,vgatext_base);    
   }
   
-  for(int i = 0; i < state.cur_line; i++){
+  for(int i = 0; i < state.cur_line; i++){ //Printing to CLI
     drawtext(1, i + 7, state.display[i], 100, 14,4,w,h,vgatext_base);
   }
 
   
-  if(state.state != 3){
+  if(state.state != 3){ //Displaying for Menu options
     int margin=0;
     if(state.menu == 0){
       drawtext(1,state.cur_line + 7,"$ echo",6,14,4,w,h,vgatext_base);
@@ -596,7 +614,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       margin=1;
     }
 
-    drawtext(margin+2,state.cur_line + 7,state.inp,state.inp_size,14,4,w,h,vgatext_base); 
+    drawtext(margin+2,state.cur_line + 7,state.inp,state.inp_size,14,4,w,h,vgatext_base); //Input display
   }
     
   //hoh_debug(state.state);

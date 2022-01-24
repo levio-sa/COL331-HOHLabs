@@ -13,6 +13,7 @@ struct shellstate_t{
     char display[100][100];
     int cur_line = 0;
     int funk = -1; //Function ID
+    
 };
 
 struct renderstate_t{
@@ -24,7 +25,8 @@ struct renderstate_t{
     int result = 0; 
     char* display[100];
     int cur_line = 0;
-    int funk=-1; //Function ID
+    
+    
 };
 
 void shell_init(shellstate_t& state);
