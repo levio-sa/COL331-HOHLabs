@@ -54,8 +54,8 @@ void shell_init(shellstate_t& state){
 // - for example, you may want to handle up(0x48),down(0x50) arrow keys for menu.
 //
 
-char get_char_from_scan(uint8_t scankey){
-    if(2<=scankey && scankey<=11){ //0 to 9
+char get_char_from_scan(uint8_t scankey){ // returns character from scancode
+    if(2 <= scankey && scankey <= 11){ //0 to 9
       return (scankey-1)%10+'0';
     }
     else{
@@ -186,7 +186,6 @@ char get_char_from_scan(uint8_t scankey){
 
 void shell_update(uint8_t scankey, shellstate_t& stateinout){
 
-    //hoh_debug("Got: "<<unsigned(scankey));
     if(scankey) stateinout.key_press+=1;
     if(stateinout.state == 0){
       switch(scankey)
@@ -223,13 +222,7 @@ void shell_update(uint8_t scankey, shellstate_t& stateinout){
     }
 }
 
-// int foo(int arg){
-//   for(int i=0;i<1000000000;++i){
-//     if(i&2) arg+=1;
-//     else arg-=1;
-//   }
-//   return arg;
-// }
+
 
 
 int factors(int arg){
@@ -240,14 +233,10 @@ int factors(int arg){
     }
   }
   return ct;
-
 }
 
-
-int long_task(int n){  
-    //no of tuples(i,j,k) such that i^2+j^2=k^2 where k<=n  and i,j,k>=0 
-    //O(n^3) time
-    int ct=0;
+int long_task(int n){  //No of tuples(i,j,k) such that i^2+j^2=k^2 where k<=n  and i,j,k>=0 
+    int ct=0;           //O(n^3) time
     for(int i=0;i<=n;i++){
       for(int j=0;j<=n;j++){
         for(int k=0;k<=n;k++){
@@ -260,8 +249,7 @@ int long_task(int n){
     return ct;
 }
 
-
-int factorial(int arg){
+int factorial(int arg){  //Factorial Function
   if(arg<0){
     return -1;
   }
@@ -278,7 +266,7 @@ int factorial(int arg){
 }
 
 
-int fib(int n){
+int fib(int n){ //nth Fibonacci number
 
   int arr[50];
   if(n==0){
@@ -295,16 +283,12 @@ int fib(int n){
     }
     return arr[n];
     
-    }
+  }
 
 }
 
-//
-// do computation
-//
 
-
-int sanity_check(shellstate_t& stateinout){
+int sanity_check(shellstate_t& stateinout){ //Returns number if given string is numeric otherwise -1
   
   int result = 0;
   for(int i=0; i<stateinout.inp_size; ++i){
@@ -313,7 +297,7 @@ int sanity_check(shellstate_t& stateinout){
     if(temp < '0' || temp > '9'){
       return -1;
     }
-    else result+=(temp-'0');
+    else result+=(temp-'0'); 
   }
   return result;
 }
@@ -340,7 +324,7 @@ int itoa(int value, char *str){  //Convert integer to string with no leading zer
   return length;
 }
 
-void shift(shellstate_t& stateinout){
+void shift(shellstate_t& stateinout){ //Shifts  up the rows in display
   for(int i = 1; i < stateinout.cur_line; i++){
     for(int j = 0; j < 100; j++){
       stateinout.display[i - 1][j] = stateinout.display[i][j];
@@ -352,28 +336,16 @@ void shift(shellstate_t& stateinout){
   }
 }
 
-int strcmp(const char *X, const char *Y)
-{
-    while (*X)
-    {
-        // if characters differ, or end of the second string is reached
-        if (*X != *Y) {
-            break;
-        }
- 
-        // move to the next pair of characters
-        X++;
-        Y++;
-    }
- 
-    // return the ASCII difference after converting `char*` to `unsigned char*`
-    return *(const unsigned char*)X - *(const unsigned char*)Y;
+int strcmp(const char *X, const char *Y){
+  while (*X && *X==*Y){
+    X++;
+    Y++;
+  }
+  return *(const unsigned char*)X - *(const unsigned char*)Y;
 }
 
 int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
   char fun[100];
-  char fun1[] = "echo";
-  char fun3[] = "factorial";
   int i=0;
   for(i=0; i<stateinout.inp_size; ++i){
     if(stateinout.inp[i]!=' ') fun[i]=stateinout.inp[i];
@@ -416,7 +388,9 @@ int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
   }
 }
 
-
+//
+// do computation
+//
 void shell_step(shellstate_t& stateinout){
 
   //
@@ -544,7 +518,7 @@ static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, 
 //
 void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       
-  // drawtext(5,0,"Menu",9,12,7,w,h,vgatext_base);
+  
   fillrect(0,0,w,h,14,2,w,h,vgatext_base);
   fillrect(0,h-1,w,h,12,2,w,h,vgatext_base);
   drawtext(35,0,"Menu",9,14,0,w,h,vgatext_base);
@@ -552,51 +526,53 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
   char presses[10];
   int l=itoa(state.key_press,presses);
   drawtext(19,h-1,presses,3,12,7,w,h,vgatext_base);
-  // if(state.state == 0){
-    if(state.menu == 0){
-      fillrect(0,1,w,2,8,2,w,h,vgatext_base);    
-      drawtext(1,1,"echo",4,8,0,w,h,vgatext_base);
-      drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
-      drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
-      drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);    
-      drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);      
-    }
-    else if(state.menu == 1){
-      fillrect(0,2,w,3,8,2,w,h,vgatext_base);    
-      drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
-      drawtext(1,2,"tripletcount",12,8,0,w,h,vgatext_base);
-      drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
-      drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);   
-      drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);       
-    }
-    else if(state.menu == 2){
-      fillrect(0,3,w,4,8,2,w,h,vgatext_base);    
-      drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
-      drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
-      drawtext(1,3,"factorial",9,8,0,w,h,vgatext_base);
-      drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
-      drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);     
-    }
-    else if(state.menu == 3){
-      fillrect(0,4,w,5,8,2,w,h,vgatext_base);    
-      drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
-      drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
-      drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
-      drawtext(1,4,"fib",3,8,0,w,h,vgatext_base);     
-      drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);     
-    }
-    else if(state.menu == 4){
-      fillrect(0,5,w,6,8,2,w,h,vgatext_base);    
-      drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
-      drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
-      drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
-      drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);     
-      drawtext(1,5,"cli",3,8,0,w,h,vgatext_base);    
-    }
-  // }
+ 
+  if(state.menu == 0){
+    fillrect(0,1,w,2,8,2,w,h,vgatext_base);    
+    drawtext(1,1,"echo",4,8,0,w,h,vgatext_base);
+    drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
+    drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+    drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);    
+    drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);      
+  }
+  else if(state.menu == 1){
+    fillrect(0,2,w,3,8,2,w,h,vgatext_base);    
+    drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+    drawtext(1,2,"tripletcount",12,8,0,w,h,vgatext_base);
+    drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+    drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);   
+    drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);       
+  }
+  else if(state.menu == 2){
+    fillrect(0,3,w,4,8,2,w,h,vgatext_base);    
+    drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+    drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
+    drawtext(1,3,"factorial",9,8,0,w,h,vgatext_base);
+    drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
+    drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);     
+  }
+  else if(state.menu == 3){
+    fillrect(0,4,w,5,8,2,w,h,vgatext_base);    
+    drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+    drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
+    drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+    drawtext(1,4,"fib",3,8,0,w,h,vgatext_base);     
+    drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);     
+  }
+  else if(state.menu == 4){
+    fillrect(0,5,w,6,8,2,w,h,vgatext_base);    
+    drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+    drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
+    drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+    drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);     
+    drawtext(1,5,"cli",3,8,0,w,h,vgatext_base);    
+  }
+  
   for(int i = 0; i < state.cur_line; i++){
     drawtext(1, i + 7, state.display[i], 100, 14,4,w,h,vgatext_base);
   }
+
+  
   if(state.state != 3){
     int margin=0;
     if(state.menu == 0){
@@ -703,15 +679,4 @@ static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, 
 }
 
 
-// static void drawnumberindecimal(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base){
-//   enum {max=sizeof(uint32_t)*2+1};
-//   char a[max];
-//   for(int i=0;i<max-1;i++){
-//     a[max-1-i-1]=(number%10)+'0';
-//     number=number/10;
-//   }
-//   a[max-1]='\0';
-
-//   drawtext(x,y,a,maxw,bg,fg,w,h,vgatext_base);
-// }
 
