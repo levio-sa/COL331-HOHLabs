@@ -171,6 +171,10 @@ char get_char_from_scan(uint8_t scankey){
         case 0x2c:
           return 'z';
             break;
+        
+        case 0x39:
+          return ' ';
+          break;
 
         default:
           return '$';  //default value
@@ -219,13 +223,13 @@ void shell_update(uint8_t scankey, shellstate_t& stateinout){
     }
 }
 
-int foo(int arg){
-  for(int i=0;i<1000000000;++i){
-    if(i&2) arg+=1;
-    else arg-=1;
-  }
-  return arg;
-}
+// int foo(int arg){
+//   for(int i=0;i<1000000000;++i){
+//     if(i&2) arg+=1;
+//     else arg-=1;
+//   }
+//   return arg;
+// }
 
 
 int factors(int arg){
@@ -237,6 +241,23 @@ int factors(int arg){
   }
   return ct;
 
+}
+
+
+int long_task(int n){  
+    //no of tuples(i,j,k) such that i^2+j^2=k^2 where k<=n  and i,j,k>=0 
+    //O(n^3) time
+    int ct=0;
+    for(int i=0;i<=n;i++){
+      for(int j=0;j<=n;j++){
+        for(int k=0;k<=n;k++){
+          if(i*i+j*j-k*k==0){
+            ct++;
+          }
+        }
+      }
+    }
+    return ct;
 }
 
 
@@ -276,7 +297,6 @@ int fib(int n){
     
     }
 
-  //return arg;
 }
 
 //
@@ -304,7 +324,7 @@ void store_input(shellstate_t& stateinout, char *str, int length, int xpos, int 
   }
 }
 
-int itoa(int value, char *str){
+int itoa(int value, char *str){  //Convert integer to string with no leading zeros
   if(value == 0){   
     *str = '0';
     return 1;
@@ -354,10 +374,10 @@ void shell_step(shellstate_t& stateinout){
         margin = 6;
         break;
       case 1:
-        store_input(stateinout, "$ factors", 9, 0, stateinout.cur_line);
-        margin = 9;
+        store_input(stateinout, "$ Counts of triplets (a,b,c) a^2+b^2=c^2 & c<=n", 47, 0, stateinout.cur_line);
+        margin = 47;
         stateinout.result = sanity_check(stateinout);
-        if(stateinout.result!=-1) stateinout.result = factors(stateinout.result);
+        if(stateinout.result!=-1) stateinout.result = long_task(stateinout.result);
         break;
       case 2:
         store_input(stateinout, "$ factorial", 11, 0, stateinout.cur_line);
@@ -446,63 +466,47 @@ static void fillrect(int x0, int y0, int x1, int y1, uint8_t bg, uint8_t fg, int
 static void drawrect(int x0, int y0, int x1, int y1, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
 static void drawtext(int x,int y, const char* str, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
 static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
-static void drawnumberindecimal(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
+//static void drawnumberindecimal(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base);
 
 //
 // Given a render state, we need to write it into vgatext buffer
 //
 void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
-
-  // drawnumberinhex()
-  // fillrect(0,1,w,2,0,2,w,h,vgatext_base);   
-  // fillrect(0,2,w,3,1,2,w,h,vgatext_base);   
-  // fillrect(0,3,w,4,2,2,w,h,vgatext_base);   
-  // fillrect(0,4,w,5,3,2,w,h,vgatext_base);   
-  // fillrect(0,5,w,6,4,2,w,h,vgatext_base);   
-  // fillrect(0,6,w,7,5,2,w,h,vgatext_base);   
-  // fillrect(0,7,w,8,6,2,w,h,vgatext_base);   
-  // fillrect(0,8,w,9,7,2,w,h,vgatext_base);   
-  // fillrect(0,9,w,10,8,2,w,h,vgatext_base);   
-  // fillrect(0,10,w,11,9,2,w,h,vgatext_base);  
-  // fillrect(0,11,w,12,10,2,w,h,vgatext_base);   
-  // fillrect(0,12,w,13,11,2,w,h,vgatext_base);   
-  // fillrect(0,13,w,14,12,2,w,h,vgatext_base);   
-  // fillrect(0,14,w,15,13,2,w,h,vgatext_base);   
-  // fillrect(0,15,w,16,14,2,w,h,vgatext_base);  
-  // fillrect(0,16,w,17,15,2,w,h,vgatext_base);
       
   // drawtext(5,0,"Menu",9,12,7,w,h,vgatext_base);
   fillrect(0,0,w,h,14,2,w,h,vgatext_base);
   fillrect(0,h-1,w,h,12,2,w,h,vgatext_base);
   drawtext(35,0,"Menu",9,14,0,w,h,vgatext_base);
-  drawtext(1,h-1,"Key",9,12,7,w,h,vgatext_base);
-  drawnumberindecimal(9,h-1,state.key_press,10,12,7,w,h,vgatext_base);
+  drawtext(1,h-1,"Key Presses",16,12,7,w,h,vgatext_base);
+  char presses[10];
+  int l=itoa(state.key_press,presses);
+  drawtext(19,h-1,presses,10,12,7,w,h,vgatext_base);
   // if(state.state == 0){
     if(state.menu == 0){
       fillrect(0,1,w,2,8,2,w,h,vgatext_base);    
       drawtext(1,1,"echo",4,8,0,w,h,vgatext_base);
-      drawtext(1,2,"factors",7,14,0,w,h,vgatext_base);
+      drawtext(1,2,"Counts of triplets (a,b,c) a^2+b^2=c^2 & c<=n",45,14,0,w,h,vgatext_base);
       drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
       drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);      
     }
     else if(state.menu == 1){
       fillrect(0,2,w,3,8,2,w,h,vgatext_base);    
       drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
-      drawtext(1,2,"factors",7,8,0,w,h,vgatext_base);
+      drawtext(1,2,"Counts of triplets (a,b,c) a^2+b^2=c^2 & c<=n",45,8,0,w,h,vgatext_base);
       drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
       drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);      
     }
     else if(state.menu == 2){
       fillrect(0,3,w,4,8,2,w,h,vgatext_base);    
       drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
-      drawtext(1,2,"factors",7,14,0,w,h,vgatext_base);
+      drawtext(1,2,"Counts of triplets (a,b,c) a^2+b^2=c^2 & c<=n",45,14,0,w,h,vgatext_base);
       drawtext(1,3,"factorial",9,8,0,w,h,vgatext_base);
       drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);      
     }
     else if(state.menu == 3){
       fillrect(0,4,w,5,8,2,w,h,vgatext_base);    
       drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
-      drawtext(1,2,"factors",7,14,0,w,h,vgatext_base);
+      drawtext(1,2,"Counts of triplets (a,b,c) a^2+b^2=c^2 & c<=n",45,14,0,w,h,vgatext_base);
       drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
       drawtext(1,4,"fib",3,8,0,w,h,vgatext_base);      
     }
@@ -517,8 +521,8 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       margin=6;
     }
     else if(state.menu == 1){
-      drawtext(1,state.cur_line + 6,"$ factors",9,14,4,w,h,vgatext_base);
-      margin=9;
+      drawtext(1,state.cur_line + 6,"$ Counts of triplets (a,b,c) a^2+b^2=c^2 & c<=n",47,14,4,w,h,vgatext_base);
+      margin=47;
     }
     else if(state.menu == 2){
       drawtext(1,state.cur_line + 6,"$ factorial",11,14,4,w,h,vgatext_base);
@@ -626,15 +630,15 @@ static void drawnumberinhex(int x,int y, uint32_t number, int maxw, uint8_t bg, 
 }
 
 
-static void drawnumberindecimal(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base){
-  enum {max=sizeof(uint32_t)*2+1};
-  char a[max];
-  for(int i=0;i<max-1;i++){
-    a[max-1-i-1]=(number%10)+'0';
-    number=number/10;
-  }
-  a[max-1]='\0';
+// static void drawnumberindecimal(int x,int y, uint32_t number, int maxw, uint8_t bg, uint8_t fg, int w, int h, addr_t vgatext_base){
+//   enum {max=sizeof(uint32_t)*2+1};
+//   char a[max];
+//   for(int i=0;i<max-1;i++){
+//     a[max-1-i-1]=(number%10)+'0';
+//     number=number/10;
+//   }
+//   a[max-1]='\0';
 
-  drawtext(x,y,a,maxw,bg,fg,w,h,vgatext_base);
-}
+//   drawtext(x,y,a,maxw,bg,fg,w,h,vgatext_base);
+// }
 

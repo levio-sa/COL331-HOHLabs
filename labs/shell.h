@@ -23,7 +23,6 @@ struct renderstate_t{
     int result = 0; 
     char* display[100];
     int cur_line = 0;
-  
 };
 
 void shell_init(shellstate_t& state);
