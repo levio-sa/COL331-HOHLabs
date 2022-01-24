@@ -189,7 +189,6 @@ void shell_update(uint8_t scankey, shellstate_t& stateinout){
     //hoh_debug("Got: "<<unsigned(scankey));
     if(scankey) stateinout.key_press+=1;
     if(stateinout.state == 0){
-
       switch(scankey)
       {
         case 72:
@@ -353,9 +352,28 @@ void shift(shellstate_t& stateinout){
   }
 }
 
+int strcmp(const char *X, const char *Y)
+{
+    while (*X)
+    {
+        // if characters differ, or end of the second string is reached
+        if (*X != *Y) {
+            break;
+        }
+ 
+        // move to the next pair of characters
+        X++;
+        Y++;
+    }
+ 
+    // return the ASCII difference after converting `char*` to `unsigned char*`
+    return *(const unsigned char*)X - *(const unsigned char*)Y;
+}
 
-void sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
+int sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
   char fun[100];
+  char fun1[] = "echo";
+  char fun3[] = "factorial";
   int i=0;
   for(i=0; i<stateinout.inp_size; ++i){
     if(stateinout.inp[i]!=' ') fun[i]=stateinout.inp[i];
@@ -374,24 +392,27 @@ void sanity_check_cl(shellstate_t& stateinout){ //Sanity check for Command Line
   }
   stateinout.inp[k] = '\0';
   stateinout.inp_size = k;
-  if(fun == "echo"){
+  if(strcmp(fun, "echo")==0){
     stateinout.funk = 0;
-    return;
+    return 6;
   }
-  else if(fun == "tripletcount"){
+  else if(strcmp(fun,"tripletcount")==0){
     stateinout.funk = 1;
     stateinout.result = sanity_check(stateinout);
     if(stateinout.result!=-1) stateinout.result = long_task(stateinout.result);
+    return 14;
   }
-  else if(fun == "factorial"){
+  else if(strcmp(fun, "factorial")==0){
     stateinout.funk = 2;
     stateinout.result = sanity_check(stateinout);
     if(stateinout.result!=-1) stateinout.result = factorial(stateinout.result);
+    return 11;
   }
-  else if(fun == "fib"){
+  else if(strcmp(fun,"fib")==0){
     stateinout.funk = 3;
     stateinout.result = sanity_check(stateinout);
-    if(stateinout.result!=-1) stateinout.result = fib(stateinout.result);
+    if(stattrcmpeino, esult! == 0=
+    return 5;
   }
 }
 
@@ -440,7 +461,7 @@ void shell_step(shellstate_t& stateinout){
       case 4:
         store_input(stateinout, "$ ", 2, 0, stateinout.cur_line);
         margin=2;
-        sanity_check_cl(stateinout);        
+        margin = sanity_check_cl(stateinout);        
         
       default:
         break;
@@ -546,7 +567,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       drawtext(1,2,"tripletcount",12,8,0,w,h,vgatext_base);
       drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
       drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);   
-      drawtext(1,5,"fib",3,14,0,w,h,vgatext_base);       
+      drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);       
     }
     else if(state.menu == 2){
       fillrect(0,3,w,4,8,2,w,h,vgatext_base);    
@@ -565,7 +586,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       drawtext(1,5,"cli",3,14,0,w,h,vgatext_base);     
     }
     else if(state.menu == 4){
-      fillrect(0,4,w,5,8,2,w,h,vgatext_base);    
+      fillrect(0,5,w,6,8,2,w,h,vgatext_base);    
       drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
       drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
       drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
@@ -595,7 +616,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       margin=5;
     }
     else if(state.menu == 4){
-      drawtext(1,state.cur_line + 7,"$ ",2,14,4,w,h,vgatext_base); 
+      drawtext(1,state.cur_line + 7,"$",2,14,4,w,h,vgatext_base); 
       margin=2;
     }
 
