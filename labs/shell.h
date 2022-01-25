@@ -5,28 +5,25 @@
 struct shellstate_t{
     int key_press = 0;  // Number of keys pressed
     int state = 0; // 0 select menu, 1 take input, 2 computing, 3 displaying output
-    char inp[100];
-    int inp_size;
+    char inp[100]; // User Input
+    int inp_size; // Input size
     int menu = 0; // Menu items (functions)
-    int result = 0;
-    int num_menu=0;
-    char display[100][100];
-    int cur_line = 0;
-    int funk = -1; //Function ID
-    
+    int result = 0; // Result
+    int num_menu=0; // Number of Menu Items
+    char display[100][100]; // Previous Display
+    int cur_line = 0; // Current line
+    int funk = -1; //Function ID  
 };
 
 struct renderstate_t{
     int key_press = 0; //Number of key presses
     int state = 0; // 0 select menu, 1 take input, 3 displaying output
-    char inp[100];
-    int inp_size;
+    char inp[100]; // User Input
+    int inp_size; // Input Size 
     int menu = 0; // Highlighted menu
-    int result = 0; 
-    char* display[100];
-    int cur_line = 0;
-    
-    
+    int result = 0; // Result
+    char* display[100]; // Previous Display
+    int cur_line = 0; // Cur Line
 };
 
 void shell_init(shellstate_t& state);

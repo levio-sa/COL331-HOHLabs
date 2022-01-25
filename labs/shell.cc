@@ -186,8 +186,8 @@ char get_char_from_scan(uint8_t scankey){ // returns character from scancode
 
 void shell_update(uint8_t scankey, shellstate_t& stateinout){
 
-    if(scankey) stateinout.key_press+=1;
-    if(stateinout.state == 0){
+    if(scankey) stateinout.key_press+=1; // Update Keypresses
+    if(stateinout.state == 0){ // Select menu item
       switch(scankey)
       {
         case 72:
@@ -208,7 +208,7 @@ void shell_update(uint8_t scankey, shellstate_t& stateinout){
       }
 
     }
-    else if(stateinout.state == 1){      
+    else if(stateinout.state == 1){ // Take input
       if(scankey == 28) stateinout.state = 2;
       else if(scankey == 0x0e && stateinout.inp_size>0) stateinout.inp_size--;
       else if(scankey == 1) stateinout.state = 0;
@@ -217,7 +217,7 @@ void shell_update(uint8_t scankey, shellstate_t& stateinout){
         if(tmp!='$') stateinout.inp[stateinout.inp_size++] = tmp;
       }      
     }
-    else if(stateinout.state == 3){
+    else if(stateinout.state == 3){ // Output
       if(scankey == 28) {stateinout.state = 0;stateinout.inp_size=0;}
     }
 }
@@ -225,7 +225,7 @@ void shell_update(uint8_t scankey, shellstate_t& stateinout){
 
 
 
-int factors(int arg){
+int factors(int arg){ // Number of factors
   int ct=0;
   for(int i=1;i<=arg;i++){
     if(arg%i==0){
@@ -302,7 +302,7 @@ int sanity_check(shellstate_t& stateinout){ //Returns number if given string is 
   return result;
 }
 
-void store_input(shellstate_t& stateinout, char *str, int length, int xpos, int ypos){
+void store_input(shellstate_t& stateinout, char *str, int length, int xpos, int ypos){ // Stores input in display
   for(int j = 0; j < length; j++){
      stateinout.display[ypos][xpos + j] = str[j];
   }
@@ -336,7 +336,7 @@ void shift(shellstate_t& stateinout){ //Shifts  up the rows in display
   }
 }
 
-int strcmp(const char *X, const char *Y){
+int strcmp(const char *X, const char *Y){ // Compare strings
   while (*X && *X==*Y){
     X++;
     Y++;
@@ -544,7 +544,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
   drawtext(1,h-1,"Key Presses",16,12,4,w,h,vgatext_base); //Key Presses text
   
   int l=itoa(state.key_press,presses);//convert number of presses to string
-  drawtext(19,h-1,presses,3,12,7,w,h,vgatext_base); //Count of keypresses
+  drawtext(19,h-1,presses,3,12,4,w,h,vgatext_base); //Count of keypresses
   if(state.menu == 0){  //Coloring the corresponding menu click in grey
     fillrect(0,1,w,2,8,2,w,h,vgatext_base);    
     drawtext(1,1,"echo",4,8,0,w,h,vgatext_base);
