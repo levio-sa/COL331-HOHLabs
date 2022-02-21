@@ -14,7 +14,7 @@ void shell_init(shellstate_t& state){
   state.num_menu = 5;
   state.cur_line = 0;
   state.funk = 0;
-  
+  state.isRunning = false;
   for(int i = 0; i < 100; i++){
     for(int j = 0; j < 100; j++){
       state.display[i][j] = ' ';
@@ -247,6 +247,32 @@ int long_task(int n){  //No of tuples(i,j,k) such that i^2+j^2=k^2 where k<=n  a
       }
     }
     return ct;
+}
+
+void long_task_new(coroutine_t* pf_coro, f_t* pf_locals, int* pret, bool* pdone, int n){  //No of tuples(i,j,k) such that i^2+j^2=k^2 where k<=n  and i,j,k>=0 
+    coroutine_t& f_coro = *pf_coro; // boilerplate: to ease the transition from existing code
+    int& ret            = *pret;
+    bool& done          = *pdone;
+    int& i = pf_locals->i;
+    int& j = pf_locals->j;
+    int& k = pf_locals->k;
+    // int& ct = pf_locals->ct;
+    // int ct=0;           //O(n^3) time
+
+    h_begin(f_coro);
+
+    for(i=0;i<=n;i++){
+      for(j=0;j<=n;j++){
+        for(k=0;k<=n;k++){
+          if(i*i+j*j-k*k==0){
+            ret++;
+          }
+          done = false; h_yield(f_coro);
+        }
+      }
+    }
+    done=true; h_end(f_coro);
+    // return ct;
 }
 
 int factorial(int arg){  //Factorial Function
@@ -510,7 +536,7 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
 //
 bool render_eq(const renderstate_t& a, const renderstate_t& b){
   if(a.key_press == b.key_press && a.state == b.state && a.menu == b.menu && a.result == b.result && 
-  a.inp_size==b.inp_size && a.cur_line == b.cur_line){
+  a.inp_size==b.inp_size && a.cur_line == b.cur_line && a.isRunning==b.isRunning){
     for(int i=0; i<a.inp_size; ++i){
       if(a.inp[i] != b.inp[i]) return false;
     }

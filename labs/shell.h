@@ -12,7 +12,8 @@ struct shellstate_t{
     int num_menu=0; // Number of Menu Items
     char display[100][100]; // Previous Display
     int cur_line = 0; // Current line
-    int funk = -1; //Function ID  
+    int funk = -1; //Function ID
+    bool isRunning = false;  //flag to check running long task
 };
 
 struct renderstate_t{
@@ -24,6 +25,7 @@ struct renderstate_t{
     int result = 0; // Result
     char* display[100]; // Previous Display
     int cur_line = 0; // Cur Line
+    bool isRunning = false;  //flag to check running long task
 };
 
 void shell_init(shellstate_t& state);

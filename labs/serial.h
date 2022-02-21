@@ -11,10 +11,7 @@ namespace serial{
 
   static inline void writechar(uint8_t c, io_t baseport){
     //insert your code here
-    if(is_transmitter_ready(baseport)){
-      io::write8(baseport, (uint16_t)0, c);
-    }
-    
+    io::write8(baseport, (uint16_t)0, c);
   }
 
 } //end serial
