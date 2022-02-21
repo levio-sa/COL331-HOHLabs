@@ -5,7 +5,9 @@
 
 // state for your coroutine implementation:
 struct f_t{
-
+    int i;
+    int j;
+    int k;
     //insert your code here
 
 };
