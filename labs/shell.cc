@@ -495,7 +495,8 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
   render.inp_size = shell.inp_size;
   render.menu = shell.menu; // Highlighted menu
   render.result = shell.result; 
-  
+  render.done = shell.done;
+  render.cor_flag = shell.cor_flag;
   //
   // renderstate. number of keys pressed = shellstate. number of keys pressed
   //
@@ -554,7 +555,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
     drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
-    drawtext(1,5,"longcoroutine",14,14,0,w,h,vgatext_base);         
+    drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);         
     drawtext(1,6,"cli",3,14,0,w,h,vgatext_base);      
   }
   else if(state.menu == 1){
@@ -563,7 +564,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,2,"tripletcount",12,8,0,w,h,vgatext_base);
     drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);
-    drawtext(1,5,"longcoroutine",14,14,0,w,h,vgatext_base);    
+    drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);    
     drawtext(1,6,"cli",3,14,0,w,h,vgatext_base);       
   }
   else if(state.menu == 2){
@@ -572,7 +573,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
     drawtext(1,3,"factorial",9,8,0,w,h,vgatext_base);
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
-    drawtext(1,5,"longcoroutine",14,14,0,w,h,vgatext_base); 
+    drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base); 
     drawtext(1,6,"cli",3,14,0,w,h,vgatext_base);     
   }
   else if(state.menu == 3){
@@ -581,7 +582,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
     drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
     drawtext(1,4,"fib",3,8,0,w,h,vgatext_base); 
-    drawtext(1,5,"longcoroutine",14,14,0,w,h,vgatext_base);     
+    drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);     
     drawtext(1,6,"cli",3,14,0,w,h,vgatext_base);     
   }
   else if(state.menu == 4){
@@ -590,7 +591,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
     drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
-    drawtext(1,5,"longcoroutine",14,8,0,w,h,vgatext_base);     
+    drawtext(1,5,"longcoroutine",13,8,0,w,h,vgatext_base);     
     drawtext(1,6,"cli",3,14,0,w,h,vgatext_base);    
   }
   else if(state.menu == 5){
@@ -599,7 +600,7 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
     drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
-    drawtext(1,5,"longcoroutine",14,14,0,w,h,vgatext_base);     
+    drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);     
     drawtext(1,6,"cli",3,8,0,w,h,vgatext_base);    
   }
   
@@ -627,8 +628,8 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
       margin=5;
     }
     else if(state.menu == 4){
-      drawtext(1,state.cur_line + 8,"$ longcoroutine",16,14,4,w,h,vgatext_base); 
-      margin=16;
+      drawtext(1,state.cur_line + 8,"$ longcoroutine",15,14,4,w,h,vgatext_base); 
+      margin=15;
     }
     else if(state.menu == 5){
       drawtext(1,state.cur_line + 8,"$",2,14,4,w,h,vgatext_base); 

@@ -57,7 +57,6 @@ void long_task_new(coroutine_t* pf_coro, f_t* pf_locals, int* pret, bool* pdone,
     int& i = pf_locals->i;
     int& j = pf_locals->j;
     int& k = pf_locals->k;
-    // int& ct = pf_locals->ct;
     
     h_begin(f_coro);
 
@@ -74,7 +73,6 @@ void long_task_new(coroutine_t* pf_coro, f_t* pf_locals, int* pret, bool* pdone,
     }
     done=true;
     h_end(f_coro);
-    // return ct;
 }
 
 void shell_step_coroutine(shellstate_t& shellstate, coroutine_t& f_coro, f_t& f_locals){
@@ -82,39 +80,41 @@ void shell_step_coroutine(shellstate_t& shellstate, coroutine_t& f_coro, f_t& f_
     //insert your code here
     if(shellstate.state == 2 && shellstate.menu == 4){
       if(shellstate.cor_flag == 0){
-        store_input_cr(shellstate, "$ longcoroutine", 16, 0, shellstate.cur_line);
-        store_input_cr(shellstate, shellstate.inp, shellstate.inp_size, 17, shellstate.cur_line);
+        coroutine_reset(f_coro);
+        shellstate.done = false;
+        shellstate.result = 0;
         shellstate.cor_flag = 1;
       }
-      
-      //margin = 5
+
       int temp_n = sanity_check_cr(shellstate);
-      bool flag = false;
-      
       if(temp_n!=-1) long_task_new(&f_coro, &f_locals, &shellstate.result, &shellstate.done, temp_n);
+
       if(temp_n == -1){
+        if(shellstate.cur_line >= 13){ // Maximum lines that will be printed
+          shift_cr(shellstate);
+          shellstate.cur_line -= 1;
+        }
+        store_input_cr(shellstate, "$ longcoroutine", 15, 0, shellstate.cur_line);
+        store_input_cr(shellstate, shellstate.inp, shellstate.inp_size, 16, shellstate.cur_line);
         store_input_cr(shellstate, "Invalid Argument", 16, 2, shellstate.cur_line + 1);
         shellstate.state = 3;
         shellstate.cur_line += 2;
-        if(shellstate.cur_line >= 13){ // Maximum lines that will be printed
-          shift_cr(shellstate);
-          shellstate.cur_line -= 1;
-        }
         shellstate.cor_flag = 0;
-        shellstate.done = false;
-      }              
+      }
+
       if(shellstate.done){ 
         char str[100];
         int l = itoa_cr(shellstate.result, str);
-        store_input_cr(shellstate, str, l, 2, shellstate.cur_line + 1);
-        shellstate.state = 3;
-        shellstate.cur_line += 2;
         if(shellstate.cur_line >= 13){ // Maximum lines that will be printed
           shift_cr(shellstate);
           shellstate.cur_line -= 1;
         }
+        store_input_cr(shellstate, "$ longcoroutine", 15, 0, shellstate.cur_line);
+        store_input_cr(shellstate, shellstate.inp, shellstate.inp_size, 16, shellstate.cur_line);
+        store_input_cr(shellstate, str, l, 2, shellstate.cur_line + 1);
+        shellstate.state = 3;
+        shellstate.cur_line += 2;
         shellstate.cor_flag = 0;
-        shellstate.done = false;
       } 
     }
 
