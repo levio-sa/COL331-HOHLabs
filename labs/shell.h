@@ -14,7 +14,9 @@ struct shellstate_t{
     int cur_line = 0; // Current line
     int funk = -1; //Function ID
     int cor_flag = 0;  //flag to check running long task
-    bool done = false;
+    int fib_flag=0;
+    bool cor_done = false;
+    bool fib_done=false;
 };
 
 struct renderstate_t{
@@ -27,7 +29,9 @@ struct renderstate_t{
     char* display[100]; // Previous Display
     int cur_line = 0; // Cur Line
     int cor_flag=0;  //flag to check running long task
-    bool done = false;
+    int fib_flag=0;
+    bool cor_done = false;
+    bool fib_done=false;
 };
 
 void shell_init(shellstate_t& state);
@@ -37,4 +41,9 @@ void shell_render(const shellstate_t& shell, renderstate_t& render);
 
 bool render_eq(const renderstate_t& a, const renderstate_t& b);
 void render(const renderstate_t& state, int w, int h, addr_t display_base);
+
+int sanity_check(shellstate_t& shellstate);
+void store_input(shellstate_t& shellstate, char *str, int length, int xpos, int ypos);
+int itoa(int value, char *str);
+void shift(shellstate_t& shellstate);
 
