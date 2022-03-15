@@ -8,22 +8,42 @@ void shell_init(shellstate_t& state){
   state.key_press = 0;
   state.menu = 0;
   state.state = 0; // 0 select menu, 1 take input, 2 computing, 3 displaying output
-  // state.inp[100];
   state.inp_size=0;
   state.result = 0;
-  state.num_menu = 7;
+  state.num_menu = 9;
   state.cur_line = 0;
   state.funk = 0;
-  state.cor_flag = 0;
-  state.fib_flag = 0; 
-  state.cor_done = false;
-  state.fib_done=false;
-
-
+  state.max_length = 13;
   for(int i = 0; i < 100; i++){
     for(int j = 0; j < 100; j++){
       state.display[i][j] = ' ';
     }
+  }
+
+  // 2.1
+  state.cor_flag = 0;
+  state.cor_done = false;
+  state.cor_line = 0;
+  state.cor_result = 0;
+  state.cor_n = 0;
+
+  // 2.2
+  state.fib_flag = 0; 
+  state.fib_done = false;
+  state.fiber_line = 0;
+  state.fib_result = 0;
+  state.fib_n = 0;
+
+  // 2.3
+  state.num_long_task[0]=0;
+  state.num_long_task[1]=0;
+  state.pos_long_task = 0;
+
+  for(int i = 0;i < 5;i++){
+    state.long_task_state[i] = -1;
+    state.long_task_line[i] = 0;
+    state.long_task_result[i] = 0;
+    state.long_task_n[i] = 0;
   }
 }
 
@@ -190,8 +210,9 @@ char get_char_from_scan(uint8_t scankey){ // returns character from scancode
 }
 
 void shell_update(uint8_t scankey, shellstate_t& stateinout){
-
+    
     if(scankey) stateinout.key_press+=1; // Update Keypresses
+    
     if(stateinout.state == 0){ // Select menu item
       switch(scankey)
       {
@@ -215,15 +236,16 @@ void shell_update(uint8_t scankey, shellstate_t& stateinout){
     }
     else if(stateinout.state == 1){ // Take input
       if(scankey == 28) stateinout.state = 2;
+      // if(scankey == 28){
+      //   stateinout.state = 0;
+      //   stateinout.enter = 1; 
+      // }
       else if(scankey == 0x0e && stateinout.inp_size>0) stateinout.inp_size--;
       else if(scankey == 1) stateinout.state = 0;
       else {
         char tmp = get_char_from_scan(scankey);
         if(tmp!='$') stateinout.inp[stateinout.inp_size++] = tmp;
       }      
-    }
-    else if(stateinout.state == 3){ // Output
-      if(scankey == 28) {stateinout.state = 0;stateinout.inp_size=0;}
     }
 }
 
@@ -270,7 +292,6 @@ int factorial(int arg){  //Factorial Function
   }
 }
 
-
 int fib(int n){ //nth Fibonacci number
 
   int arr[50];
@@ -291,6 +312,8 @@ int fib(int n){ //nth Fibonacci number
   }
 
 }
+
+
 
 
 int sanity_check(shellstate_t& stateinout){ //Returns number if given string is numeric otherwise -1
@@ -338,6 +361,12 @@ void shift(shellstate_t& stateinout){ //Shifts  up the rows in display
 
   for(int j = 0; j < 100; j++){
     stateinout.display[stateinout.cur_line - 1][j] = ' ';
+  }
+  stateinout.cur_line-=1;
+  stateinout.cor_line-=1;
+  stateinout.fiber_line-=1;
+  for(int i=0;i<5;++i){
+    stateinout.long_task_line[i]-=1;
   }
 }
 
@@ -416,14 +445,13 @@ void shell_step(shellstate_t& stateinout){
   // if a function is enabled in stateinout
   //   call that function( with arguments stored in stateinout) ;
 //stateinout.args[0] = 5;
-//stateinout.args[1] = 5;
-  if(stateinout.state == 2 && (stateinout.menu == 4 || stateinout.menu == 5)){
+//stateinout.args[1]= 5;
+  if(stateinout.state == 2 && (stateinout.menu == 4 || stateinout.menu == 5 || stateinout.menu == 6 || stateinout.menu == 7)){
     return;
   }
   int margin = 0;
-  if(stateinout.cur_line >= 12){ // Maximum lines that will be printed
+  if(stateinout.cur_line >= stateinout.max_length){ // Maximum lines that will be printed
     shift(stateinout);
-    stateinout.cur_line -= 1;
   } 
   
   if(stateinout.state == 2){  //echo fib factorial factors NOTA
@@ -446,13 +474,13 @@ void shell_step(shellstate_t& stateinout){
         break;
        
       case 3:
-        store_input(stateinout, "$ fib", 6, 0, stateinout.cur_line);
+        store_input(stateinout, "$ fib",5, 0, stateinout.cur_line);
         margin = 5;
         stateinout.result = sanity_check(stateinout);
         if(stateinout.result!=-1) stateinout.result = fib(stateinout.result);
         break;
       
-      case 6:
+      case 8:
         store_input(stateinout, "$ ", 2, 0, stateinout.cur_line);
         margin=2;
         margin = sanity_check_cl(stateinout);        
@@ -465,7 +493,7 @@ void shell_step(shellstate_t& stateinout){
     if(stateinout.menu == 0 ){
       store_input(stateinout, stateinout.inp, stateinout.inp_size, 2, stateinout.cur_line + 1);
     }
-    else if(stateinout.menu == 6 && stateinout.funk == 0){
+    else if(stateinout.menu == 8 && stateinout.funk == 0){
       store_input(stateinout, stateinout.inp, stateinout.inp_size, 2, stateinout.cur_line + 1);
     }
     else if(stateinout.result == -1){
@@ -476,7 +504,8 @@ void shell_step(shellstate_t& stateinout){
       int l = itoa(stateinout.result, str);
       store_input(stateinout, str, l, 2, stateinout.cur_line + 1);
     }
-    stateinout.state = 3;
+    stateinout.state = 0;
+    stateinout.inp_size = 0;
     stateinout.cur_line += 2;
   }
   
@@ -502,6 +531,13 @@ void shell_render(const shellstate_t& shell, renderstate_t& render){
   render.cor_done = shell.cor_done;
   render.fib_done = shell.fib_done;
   render.cor_flag = shell.cor_flag;
+  for(int i=0;i<5;i++){
+    render.long_task_state[i] = shell.long_task_state[i];
+    render.long_task_line[i] = shell.long_task_line[i];
+    render.long_task_done[i] = shell.long_task_done[i];
+    render.long_task_result[i] = shell.long_task_result[i];
+    render.long_task_n[i] = shell.long_task_n[i];
+  }
   //
   // renderstate. number of keys pressed = shellstate. number of keys pressed
   //
@@ -524,8 +560,15 @@ bool render_eq(const renderstate_t& a, const renderstate_t& b){
     for(int i=0; i<a.inp_size; ++i){
       if(a.inp[i] != b.inp[i]) return false;
     }
-    for(int i=0; i<a.cur_line; ++i){
-      if(a.display[i] != b.display[i]) return false;
+    for(int i=0; i<b.cur_line; ++i){
+      if(strcmp(a.display[i], b.display[i]) != 0) return false;
+    }
+    for(int i=0;i<5;i++){
+      if(a.long_task_state[i] != b.long_task_state[i]) return false;
+      if(a.long_task_line[i] != b.long_task_line[i]) return false;
+      if(a.long_task_done[i] != b.long_task_done[i]) return false;
+      if(a.long_task_result[i] != b.long_task_result[i]) return false;
+      if(a.long_task_n[i] != b.long_task_n[i]) return false;
     }
     return true;
   }
@@ -563,7 +606,9 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
     drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);
     drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base);       
-    drawtext(1,7,"cli",3,14,0,w,h,vgatext_base);      
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);           
   }
   else if(state.menu == 1){
     fillrect(0,2,w,3,8,2,w,h,vgatext_base);    
@@ -573,7 +618,9 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base);
     drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);
     drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base);  
-    drawtext(1,7,"cli",3,14,0,w,h,vgatext_base);       
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);          
   }
   else if(state.menu == 2){
     fillrect(0,3,w,4,8,2,w,h,vgatext_base);    
@@ -583,7 +630,9 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
     drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);
     drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base); 
-    drawtext(1,7,"cli",3,14,0,w,h,vgatext_base);     
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);        
   }
   else if(state.menu == 3){
     fillrect(0,4,w,5,8,2,w,h,vgatext_base);    
@@ -593,7 +642,9 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,4,"fib",3,8,0,w,h,vgatext_base); 
     drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);
     drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base);    
-    drawtext(1,7,"cli",3,14,0,w,h,vgatext_base);     
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);   
   }
   else if(state.menu == 4){
     fillrect(0,5,w,6,8,2,w,h,vgatext_base);    
@@ -603,7 +654,9 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
     drawtext(1,5,"longcoroutine",13,8,0,w,h,vgatext_base);
     drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base);    
-    drawtext(1,7,"cli",3,14,0,w,h,vgatext_base);    
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);    
   }
   else if(state.menu == 5){
     fillrect(0,6,w,7,8,2,w,h,vgatext_base);    
@@ -613,7 +666,9 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
     drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base);
     drawtext(1,6,"longfiber",9,8,0,w,h,vgatext_base);     
-    drawtext(1,7,"cli",3,14,0,w,h,vgatext_base);    
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);       
   }
   else if(state.menu == 6){
     fillrect(0,7,w,8,8,2,w,h,vgatext_base);    
@@ -623,50 +678,84 @@ void render(const renderstate_t& state, int w, int h, addr_t vgatext_base){
     drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
     drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base); 
     drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base);
-    drawtext(1,7,"cli",3,8,0,w,h,vgatext_base);     
+    drawtext(1,7,"fibrec",6,8,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);        
+      
+  }
+  else if(state.menu == 7){
+    fillrect(0,8,w,9,8,2,w,h,vgatext_base);    
+    drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+    drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
+    drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+    drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
+    drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base); 
+    drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base);
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,8,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,14,0,w,h,vgatext_base);     
+      
+  }
+  else if(state.menu == 8){
+    fillrect(0,9,w,10,8,2,w,h,vgatext_base);    
+    drawtext(1,1,"echo",4,14,0,w,h,vgatext_base);
+    drawtext(1,2,"tripletcount",12,14,0,w,h,vgatext_base);
+    drawtext(1,3,"factorial",9,14,0,w,h,vgatext_base);
+    drawtext(1,4,"fib",3,14,0,w,h,vgatext_base); 
+    drawtext(1,5,"longcoroutine",13,14,0,w,h,vgatext_base); 
+    drawtext(1,6,"longfiber",9,14,0,w,h,vgatext_base);
+    drawtext(1,7,"fibrec",6,14,0,w,h,vgatext_base);
+    drawtext(1,8,"towerofhanoi",12,14,0,w,h,vgatext_base);
+    drawtext(1,9,"cli",3,8,0,w,h,vgatext_base);    
       
   }
   
   for(int i = 0; i < state.cur_line; i++){ //Printing to CLI
-    drawtext(1, i + 9, state.display[i], 100, 14,4,w,h,vgatext_base);
+    drawtext(1, i + 11, state.display[i], 100, 14,4,w,h,vgatext_base);
   }
 
   
   if(state.state != 3){ //Displaying for Menu options
     int margin=0;
     if(state.menu == 0){
-      drawtext(1,state.cur_line + 9,"$ echo",6,14,4,w,h,vgatext_base);
+      drawtext(1,state.cur_line + 11,"$ echo",6,14,4,w,h,vgatext_base);
       margin=6;
     }
     else if(state.menu == 1){
-      drawtext(1,state.cur_line + 9,"$ tripletcount",14,14,4,w,h,vgatext_base);
+      drawtext(1,state.cur_line + 11,"$ tripletcount",14,14,4,w,h,vgatext_base);
       margin=14;
     }
     else if(state.menu == 2){
-      drawtext(1,state.cur_line + 9,"$ factorial",11,14,4,w,h,vgatext_base);
+      drawtext(1,state.cur_line + 11,"$ factorial",11,14,4,w,h,vgatext_base);
       margin=11;
     }
     else if(state.menu == 3){
-      drawtext(1,state.cur_line + 9,"$ fib",5,14,4,w,h,vgatext_base); 
+      drawtext(1,state.cur_line + 11,"$ fib",5,14,4,w,h,vgatext_base); 
       margin=5;
     }
     else if(state.menu == 4){
-      drawtext(1,state.cur_line + 9,"$ longcoroutine",15,14,4,w,h,vgatext_base); 
+      drawtext(1,state.cur_line + 11,"$ longcoroutine",15,14,4,w,h,vgatext_base); 
       margin=15;
     }
     else if(state.menu == 5){
-      drawtext(1,state.cur_line + 9,"$ longfiber",11,14,4,w,h,vgatext_base); 
+      drawtext(1,state.cur_line + 11,"$ longfiber",11,14,4,w,h,vgatext_base); 
       margin=11;
     }
     else if(state.menu == 6){
-      drawtext(1,state.cur_line + 9,"$",2,14,4,w,h,vgatext_base); 
+      drawtext(1,state.cur_line + 11,"$ fibrec",8,14,4,w,h,vgatext_base); 
+      margin=8;
+    }
+    else if(state.menu == 7){
+      drawtext(1,state.cur_line + 11,"$ towerofhanoi",14,14,4,w,h,vgatext_base); 
+      margin=14;
+    }
+    else if(state.menu == 8){
+      drawtext(1,state.cur_line + 11,"$",2,14,4,w,h,vgatext_base); 
       margin=1;
     }
 
-    drawtext(margin+2,state.cur_line + 9,state.inp,state.inp_size,14,4,w,h,vgatext_base); //Input display
+    drawtext(margin+2,state.cur_line + 11,state.inp,state.inp_size,14,4,w,h,vgatext_base); //Input display
   }
-    
-  //hoh_debug(state.state);
   
   
 
