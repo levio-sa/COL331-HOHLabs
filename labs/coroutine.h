@@ -4,12 +4,10 @@
 #include "util/coroutine.h"
 
 // state for your coroutine implementation:
-struct f_t{
+struct f_t{ // State variables
     int i;
     int j;
     int k;
-    //insert your code here
-
 };
 
 
