@@ -3,5 +3,5 @@ HoHLabs:
 ========
 
 
-Please read the labs page on how to proceed.
+HOHLabs under Operating Systems by Sorav Bansal(2022), IITD CSE
 
